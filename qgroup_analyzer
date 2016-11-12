@@ -12,7 +12,7 @@ function _get_name_from_group () {
 	[[ -z $3 ]] && return 1
 	[[ ! -e $savedir/groups/$1.json ]] && return 2
 
-	jq '[foreach .mems [] as $item (.; 
+	jq 'foreach .mems [] as $item (.; 
 		if $item .uin == '$2' 
 			then if $item .card != "" and '$3' 
 				then $item .card 
@@ -20,12 +20,115 @@ function _get_name_from_group () {
 			end 
 			else empty 
 		end
-	)]' < $savedir/groups/$1.json | jq '.[]' | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
+	)' < $savedir/groups/$1.json | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
+}
+
+# _get_uin_from_group: fetch user's uin from group (internal)
+# param:  $1: group
+#         $2: uin
+# return: list of uins if exist, empty otherwise.
+function _get_uin_from_group () {
+	
+	[[ -z $2 ]] && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && return 2
+	
+	jq 'foreach .mems [] as $item (.; 
+		if $item .card == "'$2'" or $item .nick == "'$2'"
+			then $item .uin
+			else empty
+		end
+	)' < $savedir/groups/$1.json
+	
+}
+
+# _if_in_group: check if given uin/username is in a group (internal)
+# param:  $1: group 
+#         $2: username/uin
+#         $3: boolean, ture: querying using uin, false: querying using nickname/cardname
+# return: true/false
+function _if_in_group () {
+
+	[[ -z $3 ]] && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && return 2
+
+	(grep -q 'true' <<< "$(jq 'foreach .mems [] as $item (.;
+		if '$3'
+			then $item .uin | tostring == "'$2'"
+			else $item .card == "'$2'" or $item .nick == "'$2'"
+		end
+	)' < $savedir/groups/$1.json)") && echo "true" || echo "false"
+
+}
+
+# _get_group_name: get group's name by group ID
+# param:  $1: group ID
+# return: group name if exist
+function _get_group_name () {
+	
+	[[ -z $1 ]] && return 1
+	for type in join create manage
+	do
+		jq 'foreach .'$type' [] as $item (.;
+			if $item .gc == '$1'
+				then $item .gn
+				else empty
+			end
+		)' < $savedir/groups.json
+	done | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
+	
 }
 
 # get_uin: search for a user's uin form groups by name
 # param:  $1: Username/Card name
-# return: uin if found, empty otherwise
+# return: list of uin(s) if found, empty otherwise
+function get_uin () {
+
+	[[ -z $1 ]] && echo "usage: get_uin <cardname|nickname>" && return 1
+
+	groups="
+$(jq '.join [] .gc' < save/groups.json)
+$(jq '.create [] .gc' < save/groups.json)
+$(jq '.manage [] .gc' < save/groups.json)"
+	for group in $groups
+	do
+		_get_uin_from_group "$group" "$1"
+	done
+
+	return 0
+}
+
+# get_joined: list joined groups of a user
+# param:  $1: query type (uin/nickname)
+#         $2: target
+# return: list of joined groups
+function get_joined () {
+	[[ -z $2 ]] && echo "usage: get_joined <type> <target>, where type can be uin or nickname."
+	case $1 in
+		"uin") _arg=true;;
+		"nickname") _arg=false;;
+		*) echo "unknow type $1"; return 1;;
+	esac
+
+	        groups="
+$(jq '.join [] .gc' < save/groups.json)
+$(jq '.create [] .gc' < save/groups.json)
+$(jq '.manage [] .gc' < save/groups.json)"
+
+	printf "%-4s %-13s %-30s\n" "#" "Group ID" "Group Name"
+	printf "%-4s %-13s %-30s\n" "---" "------------" "-----------------------------"
+
+	count=0
+
+	for  group in $groups
+	do
+		$(_if_in_group $group $2 $_arg) && {
+			let count++
+			printf "%-4s %-13s %-30s\n" "$count" "$group" "$(_get_group_name $group)"
+		}
+	done
+
+	return 0
+}
 
 # common_members: get common members in 2 groups
 # param:  $1: group 1
@@ -52,6 +155,8 @@ $(jq '.mems [] .uin' < $savedir/groups/$2.json)"
 		let count++
 		printf "%-4s %-13s %-30s\n" "$count" "$uin" "$(_get_name_from_group $1 $uin true)"
 	done
+
+	return 0
 
 }
 
