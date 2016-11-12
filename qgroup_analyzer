@@ -1,0 +1,58 @@
+#!/bin/bash
+
+savedir="save"
+
+# _get_name_from_group: fetch user's name from group (internal)
+# param:  $1: group
+#         $2: uin
+#         $3: boolean, true: print card name if possible, nick name otherwise, false: always print nick name.
+# return: group card name if exist, nickname otherwise, empty if that member is not in group.
+function _get_name_from_group () {
+
+	[[ -z $3 ]] && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && return 2
+
+	jq '[foreach .mems [] as $item (.; 
+		if $item .uin == '$2' 
+			then if $item .card != "" and '$3' 
+				then $item .card 
+				else $item .nick 
+			end 
+			else empty 
+		end
+	)]' < $savedir/groups/$1.json | jq '.[]' | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
+}
+
+# get_uin: search for a user's uin form groups by name
+# param:  $1: Username/Card name
+# return: uin if found, empty otherwise
+
+# common_members: get common members in 2 groups
+# param:  $1: group 1
+#         $2: group 2
+# return: list of members, with their name in group.
+function common_members () {
+	
+	[[ -z $2 ]] && echo "usage: common_members <gc1> <gc2>" && return 1
+	[[ ! -e $savedir/groups/$1.json || \
+	   ! -e $savedir/groups/$2.json ]] && echo "group(s) does not exist."
+
+	# get all members in given groups.
+	members="$(jq '.mems [] .uin' < $savedir/groups/$1.json)
+$(jq '.mems [] .uin' < $savedir/groups/$2.json)"
+
+	printf "%-4s %-13s %-30s\n" "#" "QQ ID" "Name"
+	printf "%-4s %-13s %-30s\n" "---" "------------" "-----------------------------"
+
+	count=0
+
+	# sort them, and get the duplicated members, then print them.
+	sort <<< "$members" | uniq -d | while read uin
+	do
+		let count++
+		printf "%-4s %-13s %-30s\n" "$count" "$uin" "$(_get_name_from_group $1 $uin true)"
+	done
+
+}
+
+$*

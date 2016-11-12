@@ -1,0 +1,63 @@
+#!/bin/bash
+
+API_base='http://qun.qq.com/cgi-bin/qun_mgr'
+
+[[ -z $COOKIE || -z $bkn ]] && {
+	cat << HELP
+qgroup_download is a simple tools writen is BaSH to download QQ groups
+informations. 
+
+To use it, set COOKIE to your http://qun.qq.com/ cookie, and set bkn to your
+http://qun.qq.com/ bkn. 'bkn' is some kind of CSRF token. You can find it in
+POST body when you try to retrieve group list/member list. (i.e. 
+http://qun.qq.com/member.html#gid=xxxxxx), where xxxxx is a group ID.
+
+One or all of the value above are not set. Please do: 
+$ export COOKIE="Cookie: .... your cookie ...." 
+$ export bkn="... your bkn ..."
+$ $0
+HELP
+
+	exit 1
+}
+
+[[ ! -d "save" ]] && {
+	mkdir save || {
+		echo "Err: can't create save dir. "
+		exit 1
+	}
+}
+
+[[ ! -d "save/groups" ]] && {
+	mkdir save/groups || {
+		echo "Err: can't create save dir for groups. "
+		exit 1
+	}
+}
+	
+
+function do_api {
+	curl -s -H "$COOKIE" "$API_base/$1?bkn=$bkn&$2"
+}
+
+# get friends, groups:
+echo "[*] fetching friends list, groups list."
+do_api get_friend_list > save/friends.json
+do_api get_group_list > save/groups.json
+
+# get groups:
+target_groups="
+$(jq '.join [] .gc' < save/groups.json)
+$(jq '.create [] .gc' < save/groups.json)
+$(jq '.manage [] .gc' < save/groups.json)"
+
+common_arg="st=0&end=1000&sort=0"
+
+echo "[*] fetching group members."
+for group in $target_groups
+do
+	echo "[*] fetching group id $group."
+	do_api search_group_members "gc=$group&$common_arg" > save/groups/$group.json
+done
+
+ehco "[*] All set. "
