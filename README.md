@@ -5,14 +5,14 @@
 
 ### How to use? ###
 
-You will need to dump your groups infomation first. To do this, log in to [QQ Groups's Website](http://qun.qq.com), then navigate to [member management page](http://qun.qq.com/member.html). Open developer console, Get cookie by doing `alert(document.cookie)`, for bkn, you can obtian it by pasting following code into console:
+You will need to dump your groups infomation first. To do this, log in to [QQ Groups's Website](http://qun.qq.com), then navigate to [member management page](http://qun.qq.com/member.html). Open developer console, Get cookie by doing `alert(document.cookie)`, for bkn, you can get it by pasting following code into console:
 
 ```javascript
 for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o > n; ++n) t += (t << 5) + e.charAt(n).charCodeAt(); 
 alert(2147483647 & t);
 ```
 
-After obtaing cookie and bkn, do: 
+Once you obtained the cookie and bkn, do: 
 
 ```
 $ export COOKIE=".... your cookie ...." 
