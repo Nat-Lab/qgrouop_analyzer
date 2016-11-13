@@ -513,7 +513,7 @@ function prolog_export () {
 	echo "To found all groups member's relation: "
 	echo "?- member(X,Y),member(X,Z),not(Z==Y),not(X==$2)."
 	echo "X = a_uin_of_group_member, "
-	echo "Y = a_gid_that_uin_, "
+	echo "Y = a_gid_that_uin_joined, "
 	echo "Z = another_gid_that_uin_joined ;"
 	echo "X = ..., "
 	echo "Y = ..., "

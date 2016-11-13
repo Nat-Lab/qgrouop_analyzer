@@ -1,26 +1,21 @@
 ### qgroup-analyzer ###
 ---
 
-`qgroup-analyzer` is a simple tool written in BaSH helps you analyze your QQ groups. It requires [jq](https://stedolan.github.io/jq/) to run.
+`qgroup-analyzer` 是使用 BaSH 寫成的一個 QQ 群組分析工具。它需要 [jq](https://stedolan.github.io/jq/) 來運行。
 
-### How to use? ###
+### 如何使用？ ###
 
-You will need to dump your groups infomation first. To do this, log in to [QQ Groups's Website](http://qun.qq.com), then navigate to [member management page](http://qun.qq.com/member.html). Open developer console, Get cookie by doing `alert(document.cookie)`, for bkn, you can get it by pasting following code into console:
+在使用 `qgroup-analyzer` 前，妳需要先將 QQ 群組與好友數據匯出。使用 `qgroup_info_dump` 就能做到。`qgroup_info_dump` 會從環境變量中讀取 `COOKIE` 和 `bkn`。這些信息是登錄到 QQ API 所需要的憑據。若要獲取這些信息，登陸到[QQ 群](http://qun.qq.com)網站，訪問[成員管理](http://qun.qq.com/member.html)頁。在地址欄輸入 `javascript:alert(document.cookie)` 來獲取 `COOKIE`。在地址欄輸入 `javascript:(for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o > n; ++n) t += (t << 5) + e.charAt(n).charCodeAt();alert(2147483647 & t);)` 來獲取 `bkn`。
 
-```javascript
-for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o > n; ++n) t += (t << 5) + e.charAt(n).charCodeAt(); 
-alert(2147483647 & t);
-```
-
-Once you obtained the cookie and bkn, do: 
+取得這些信息之後，就可以開始匯出數據了：
 
 ```
-$ export COOKIE=".... your cookie ...." 
-$ export bkn="... your bkn ..."
+$ export COOKIE="...妳的 COOKIE..." 
+$ export bkn="...妳的 bkn..."
 $ ./qgroup_info_dump
 ```
 
-And now the script will dump all your groups informations. When dump finished, you should get:
+如果一切順利，你會獲得這些 `JSON` 文件。
 
 ```
 qgroup-analyzer
@@ -36,7 +31,53 @@ qgroup-analyzer
     └── groups.json
 ```
 
-You can now play it with `qgroup_analyzer`. As you hava got all JSON data, you can also do your own analysis.
+`friends.json` 是妳好友的列表。
+
+`groups.json` 是妳群組的列表。
+
+`groups/%%%%.json` 是單個群組的詳細信息。包括成員、管理員、等級等數據。
+
+現在，你可以使用 `qgroup_analyzer` 來分析妳的群組了，語法是：
+
+```
+./qgroup_analyzer <指令> [參數] [參數...]
+```
+
+可以使用的指令有（其中，`uin` 代表 QQ ID，`gid` 代表群組 ID。）：
+
+`common_members <gid_a> <gid_b>` 列出在群組 `a` 和群組 `b` 內的共同成員。
+
+`favorite_groups <uin>` 對用戶 `uin` 的群組等級積分進行排行。
+
+`friends_common` 對好友依據他們與妳共同群組的數量進行排行。
+
+`friends_in_group <gid>` 列出群組 `gid` 中的好友。`gid` 代表群組 ID。
+
+`get_all_names <uin>` 列出 `uin` 全部名字。（全部群內的群名片。）
+
+`get_joined <uin>` 列出 `uin` 所加入的群組。
+
+`get_uin <nick/card>` 列出使用指定的群名片，或用戶名的用戶的 `uin`。
+
+`joined_of_group <gid>` 列出 `gid` 的成員所加入的群。
+
+`joined_of_firends` 列出所有好友加入的群。
+
+`popular_groups` 依據群內好友數量，對群進行排行。
+
+`potential_friends <n>` 列出共同群超過 `n` 個，但不是好友的使用者。
+
+`prolog_export <output_filename> <own_uin>` 匯出數據到 `prolog` 文件。`output_filename` 代表要寫入的文件名，`own_uin` 代表自己的 `uin`。`prolog_export` 指令會匯出所有好友關係、群關係。它會使用如下的條件：`member(uin, gid).`，`friend(own_uin, uin).`。例如，要列出所有群之間的成員關係網，可以使用如下的指令：
+
+```
+? - member(X,Y),member(X,Z),not(Z==Y),not(X==own_uin).
+X = a_uin_of_group_member, 
+Y = a_gid_that_uin_joined, 
+Z = another_gid_that_uin_joined ;
+X = ..., 
+Y = ..., 
+Z = ... ;
+```
 
 ### License ###
 
