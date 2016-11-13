@@ -4,7 +4,57 @@ savedir="save"
 
 [[ ! -e save || ! -e save/groups ]] && echo "no saved data. Do qgroup_info_dump first." && exit 1
 
-# _count_friends_in_group: count number of friends in group
+# _count_joined_of_user: count number of joined groups of a user. (internal)
+# param:  $1: uin
+# return: number of joined groups
+function _count_joined_of_user () {
+
+	[[ -z $1 ]] && return 1
+
+	#groups="
+#$(jq '.join [] .gc' < save/groups.json)
+#$(jq '.create [] .gc' < save/groups.json)
+#$(jq '.manage [] .gc' < save/groups.json)"
+
+	#let count=0
+
+	#for group in $groups
+	#do
+	#	$(_if_in_group $group $1 true) && let count++
+	#done
+
+	#echo $count
+
+	# bad implement. but way more faster.
+	egrep -lir "$1" $savedir/groups | wc -l
+
+}
+
+# _is_friend: test if a uin is friend
+# param:  $1: uin
+# return: true/false
+function _is_friend () {
+	[[ -z $1 ]] && return 1
+	(grep -qE "^$1$" <<< "$(_get_friends)") && echo "true" || echo "false"
+}
+
+# _get_all_known: list ALL know users, from group, friends, etc.
+# param:  none
+# return: list of uin
+function _get_all_known () {
+	sort <<< "$(cat $savedir/groups/*.json | jq '.mems [] .uin')
+$(_get_friends)" | uniq 
+}
+
+# _get_all_known_non_friend: list ALL know users that are not friend
+# param:  none
+# return: list of uin
+function _get_all_known_non_friend () {
+	sort <<< "$(_get_all_known)
+$(_get_friends)" | uniq -u
+}
+
+# _count_friends_in_group: count number of friends in group (internal)
 # param:  $1: gid
 # return: number of friends
 function _count_friends_in_group () {
@@ -77,6 +127,13 @@ function _get_uin_from_group () {
 		end
 	)' < $savedir/groups/$1.json
 	
+}
+
+# _get_name: get name(s) by uin
+# param:  $1: uin
+# return: list of names if exist
+function _get_name () {
+	cat $savedir/groups/*.json | jq 'foreach .mems [] as $item(.; if $item .uin == '$1' then $item .nick else empty end)' | head -n1 | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
 }
 
 # _if_in_group: check if given uin/username is in a group (internal)
@@ -192,6 +249,79 @@ $(jq '.manage [] .gc' < save/groups.json)"
 		let count++
 		gid="$(cut -f2 <<< "$item")"
 		printf "%-4s %-13s %-13s %-30s\n" "$count" "$gid" "$(cut -f1 <<< "$item")" "$(_get_group_name $gid)"
+	done
+
+	rm $temp
+
+}
+
+# potential_friends: find users with greater # of common groups but not friend
+# param:  $1: threshold
+# return: list of users
+function potential_friends () {
+	
+	[[ -z $1 ]] && echo "usage: potential_friends <n>" && return 1
+	
+	uins="$(_get_all_known_non_friend)"
+	uins_count="$(wc -l <<< "$uins" | tr -d '\t ')"
+	
+	[[ $uins_count -gt 2000 ]] && echo "There are $uins_count users to process. This gonna takes a while."
+
+	temp="$(mktemp)"
+	count=0
+	_count=0
+
+	while read -r uin
+	do
+		let _count++
+		((_count%100)) || echo "$_count users done."
+		common="$(_count_joined_of_user $uin)"
+		[[ $common -gt $1 ]] && echo "$common	$uin" >> $temp
+	done <<< "$uins"
+
+	printf "%-4s %-13s %-13s %-30s\n" "#" "QQ ID" "# of common" "Username"
+	printf "%-4s %-13s %-13s %-30s\n" "---" "------------" "------------" "-----------------------------"
+
+	sort -nr $temp | while read -r item
+	do
+		let count++
+		uin="$(cut -f2 <<< "$item")"
+		printf "%-4s %-13s %-13s %-30s\n" "$count" "$uin" "$(cut -f1 <<< "$item")" "$(_get_name $uin)"
+	done
+
+	rm $temp
+
+}
+
+# friends_common: rank firends with number of common groups.
+# param:  none
+# return: list of friends
+function friends_common () {
+
+	temp="$(mktemp)"
+	count=0
+
+	uins="$(_get_friends)"
+	uins_count="$(wc -l <<< "$uins" | tr -d '\t ')"
+	_count=0
+
+	[[ $uins_count -gt 2000 ]] && echo "There are $uins_count users to process. This gonna takes a while."
+
+	while read -r uin
+	do
+		let _count++
+		((_count%100)) || echo "$_count users done."
+		echo "$(_count_joined_of_user $uin)	$uin" >> $temp
+	done <<< "$uins"
+
+	printf "%-4s %-13s %-13s %-30s\n" "#" "QQ ID" "# of common" "Username"
+	printf "%-4s %-13s %-13s %-30s\n" "---" "------------" "------------" "-----------------------------"
+
+	sort -nr $temp | while read -r item
+	do
+		let count++
+		uin="$(cut -f2 <<< "$item")"
+		printf "%-4s %-13s %-13s %-30s\n" "$count" "$uin" "$(cut -f1 <<< "$item")" "$(_get_friend_name $uin)"
 	done
 
 	rm $temp
@@ -328,6 +458,20 @@ $(jq '.mems [] .uin' < $savedir/groups/$2.json)"
 
 }
 
+# get_all_names: get all names use by given user
+# param:  $1: uin
+# return: list of names
+function get_all_names () {
+
+	[[ -z $1 ]] && echo "usage: get_all_names <uin>" && return 1
+
+	nick="$(cat $savedir/groups/*.json | jq 'foreach .mems [] as $item(.; if $item .uin == '$1' then $item .nick else empty end)')"
+	cards="$(cat $savedir/groups/*.json | jq 'foreach .mems [] as $item(.; if $item .uin == '$1' then $item .card else empty end)')"
+	echo "$nick
+$cards" | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;' | sort -r | uniq
+
+}
+
 [[ ! -z $* ]] && $* || cat << HELP
 usage: $0 <command> <args> [args...]
 
@@ -336,7 +480,9 @@ COMMANDS:
                            <b> are group ID.
   favorite_groups <uin>  : show level point rank of groups for user <uin>, 
                            where <uin> is user ID.
+  friends_common         : rank friends with # of common groups.
   friends_in_group <gid> : list friends in <gid>, where <gid> is group ID.
+  get_all_names <uin>    : get all names use by <uin>, where <uin> is user ID.
   get_joined <uin>       : show joined groups for <uin> where <uin> is user ID.
   get_uin <nick/card>    : get user's ID by it's nickname or group card name, 
                            where <nick/card> is user's nick or card name.
@@ -344,14 +490,21 @@ COMMANDS:
                            <gid>, where <gid> is group ID.
   joined_of_firends      : list joined groups for all friends.
   popular_groups         : rank groups by number of friends in it.
+  potential_friends <n>  : list known users that are not friend, but has more
+                           than <n> common groups with you.
 
 ADVANCE COMMANDS:
   _count_friends_in_group <gid>
+  _count_joined_of_user <uin>
+  _get_all_known
+  _get_all_known_non_friend
   _get_friend_name <uin>
   _get_friends
   _get_group_name <gid>
   _get_group_point <gid> <uin>
+  _get_name <uin>
   _get_name_from_group <gid> <uin> <card?>
   _get_uin_from_group <gid> <nick/card>
   _if_in_group <gid> <nick/card/uin> <uin?>
+  _is_friend <uin>
 HELP
