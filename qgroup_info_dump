@@ -57,4 +57,4 @@ do
 	do_api search_group_members "gc=$group&$common_arg" > save/groups/$group.json
 done
 
-ehco "[*] All set. "
+echo "[*] All set. "
