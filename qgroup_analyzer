@@ -4,6 +4,42 @@ savedir="save"
 
 [[ ! -e save || ! -e save/groups ]] && echo "no saved data. Do qgroup_info_dump first." && exit 1
 
+# _count_friends_in_group: count number of friends in group
+# param:  $1: gid
+# return: number of friends
+function _count_friends_in_group () {
+
+	[[ -z $1 ]] && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && return 2 
+	num="$(sort <<< "$(jq '.mems [] .uin' < $savedir/groups/$1.json)
+$(_get_friends)" | uniq -d | wc -l | tr -d '\t ')"
+	echo $(($num - 1))
+
+}
+
+# _get_friends: get list of friend's uin (internal)
+# param:  no
+# return: list of friends uin
+function _get_friends () {
+	jq 'foreach .result [] as $item (.; $item .mems [] .uin)' < $savedir/friends.json
+}
+
+# _get_friend_name: get a friend's nickname (internal)
+# param:  $1: uin
+# return: friend's nickname if exist
+function _get_friend_name () {
+
+	[[ -z $1 ]] && return 1
+
+	jq 'foreach .result [] as $item (.; $item .mems []) | foreach . as $item (.; 
+		if $item .uin == '$1'
+			then $item .name
+			else empty
+		end
+	)' < $savedir/friends.json | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
+}
+
+
 # _get_name_from_group: fetch user's name from group (internal)
 # param:  $1: group
 #         $2: uin
@@ -27,7 +63,7 @@ function _get_name_from_group () {
 
 # _get_uin_from_group: fetch user's uin from group (internal)
 # param:  $1: group
-#         $2: uin
+#         $2: uick/card name
 # return: list of uins if exist, empty otherwise.
 function _get_uin_from_group () {
 	
@@ -127,6 +163,39 @@ $(jq '.manage [] .gc' < save/groups.json)"
 		
 	done 
 
+	rm $temp
+}
+
+# popular_groups: show the groups that have most friends in it.
+# param:  none
+# return: list of groups, order by # of friends inside.
+function popular_groups () {
+
+	groups="
+$(jq '.join [] .gc' < save/groups.json)
+$(jq '.create [] .gc' < save/groups.json)
+$(jq '.manage [] .gc' < save/groups.json)"
+	
+	temp="$(mktemp)"
+	count=0
+	
+	for group in $groups
+	do
+		echo "$(_count_friends_in_group $group)	$group" >> $temp
+	done
+
+	printf "%-4s %-13s %-13s %-30s\n" "#" "Group ID" "# of friends" "Group Name"
+	printf "%-4s %-13s %-13s %-30s\n" "---" "------------" "------------" "-----------------------------"
+
+	sort -nr $temp | while read -r item
+	do
+		let count++
+		gid="$(cut -f2 <<< "$item")"
+		printf "%-4s %-13s %-13s %-30s\n" "$count" "$gid" "$(cut -f1 <<< "$item")" "$(_get_group_name $gid)"
+	done
+
+	rm $temp
+
 }
 
 # get_uin: search for a user's uin form groups by name
@@ -181,6 +250,54 @@ $(jq '.manage [] .gc' < save/groups.json)"
 	return 0
 }
 
+# joined_of_group: list joined groups for all groups member in given group.
+# param:  $1: group
+# return: joined groups, except given one.
+function joined_of_group () {
+	[[ -z $1 ]] && echo "usage: joined_of_group <gid>" && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && echo "group(s) does not exist."
+
+	jq '.mems [] .uin' < $savedir/groups/$1.json | while read -r uin
+	do
+		echo "User: $uin ($(_get_name_from_group $1 $uin true)/$(_get_name_from_group $1 $uin false))"
+		get_joined uin $uin; echo
+	done
+}
+
+# joined_of_firends: list joined groups for all friends.
+# param:  no
+# return: list of joined groups of friends
+function joined_of_firends () {
+
+	_get_friends | while read -r uin
+	do
+		echo "User: $uin ($(_get_friend_name $uin))"
+		get_joined uin $uin; echo
+	done
+
+}
+
+# friends_in_group: list friends in given group
+# param:  $1: gid
+# return: friends in group
+function friends_in_group () {
+	[[ -z $1 ]] && echo "usage: friends_in_group <gid>" && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && echo "group(s) does not exist."
+	users="$(jq '.mems [] .uin' < $savedir/groups/$1.json)
+$(_get_friends)"
+	
+	printf "%-4s %-13s %-30s\n" "#" "QQ ID" "Name"
+	printf "%-4s %-13s %-30s\n" "---" "------------" "-----------------------------"
+	
+	count=0
+	
+	sort <<< "$users" | uniq -d | while read -r uin
+	do
+		let count++
+		printf "%-4s %-13s %-30s\n" "$count" "$uin" "$(_get_name_from_group $1 $uin true)"
+	done
+}
+
 # common_members: get common members in 2 groups
 # param:  $1: group 1
 #         $2: group 2
@@ -219,14 +336,22 @@ COMMANDS:
                            <b> are group ID.
   favorite_groups <uin>  : show level point rank of groups for user <uin>, 
                            where <uin> is user ID.
+  friends_in_group <gid> : list friends in <gid>, where <gid> is group ID.
   get_joined <uin>       : show joined groups for <uin> where <uin> is user ID.
   get_uin <nick/card>    : get user's ID by it's nickname or group card name, 
                            where <nick/card> is user's nick or card name.
+  joined_of_group <gid>  : list joined groups for all groups members in a given
+                           <gid>, where <gid> is group ID.
+  joined_of_firends      : list joined groups for all friends.
+  popular_groups         : rank groups by number of friends in it.
 
 ADVANCE COMMANDS:
+  _count_friends_in_group <gid>
+  _get_friend_name <uin>
+  _get_friends
   _get_group_name <gid>
   _get_group_point <gid> <uin>
   _get_name_from_group <gid> <uin> <card?>
-  _get_uin_from_group <gid> <uin>
+  _get_uin_from_group <gid> <nick/card>
   _if_in_group <gid> <nick/card/uin> <uin?>
 HELP
