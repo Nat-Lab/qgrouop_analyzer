@@ -472,6 +472,56 @@ $cards" | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;' | sort -r | uniq
 
 }
 
+# prolog_export: export info to prolog.
+# param:  $1: output file
+#         $2: own uin
+# return: none
+function prolog_export () {
+	
+	[[ -z $2 ]] && echo "usage: prolog_export <output_file> <own_uin>" && return 1
+	[[ -e $1 ]] && echo "$1 already exist." && return 3
+
+	# export friends.
+
+	_get_friends | while read -r uin
+	do
+		echo "friend($2,$uin)." >> "$1"
+		echo "friend($uin,$2)." >> "$1"
+	done
+
+	# export groups.
+	
+	for group in $(jq '.join [] .gc' < save/groups.json) $(jq '.create [] .gc' < save/groups.json) $(jq '.manage [] .gc' < save/groups.json)
+	do
+		jq '.mems [] .uin' < $savedir/groups/$group.json | while read -r uin
+		do
+			echo "member($uin,$group)." >> "$1"
+		done
+	done
+
+	echo "done. $(wc -l < "$1" | tr -d '\t ') lines written."
+	echo "We have: member(uin, gid), and friend($2, uin)."
+	echo 
+	echo "For example, to find out groups that has your friend inside, do:"
+	echo "?- member(X,Y),friend($2,X)."
+	echo "X = a_uin_of_friend, "
+	echo "Y = a_group_ID ;"
+	echo "X = ...,"
+	echo "Y = ... ;"
+	echo "..."
+	echo 
+	echo "To found all groups member's relation: "
+	echo "?- member(X,Y),member(X,Z),not(Z==Y)."
+	echo "X = a_uin_of_group_member, "
+	echo "Y = a_gid_that_uin_, "
+	echo "Z = another_gid_that_uin_joined ;"
+	echo "X = ..., "
+	echo "Y = ..., "
+	echo "Z = ... ;"
+	echo "..."
+
+}
+
 [[ ! -z $* ]] && $* || cat << HELP
 usage: $0 <command> <args> [args...]
 
@@ -492,6 +542,8 @@ COMMANDS:
   popular_groups         : rank groups by number of friends in it.
   potential_friends <n>  : list known users that are not friend, but has more
                            than <n> common groups with you.
+  prolog_export <o> <u>  : export friends, groups to prolog, where <o> is
+                           output file, <u> is your user ID.
 
 ADVANCE COMMANDS:
   _count_friends_in_group <gid>
