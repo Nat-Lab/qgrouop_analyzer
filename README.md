@@ -36,7 +36,7 @@ qgroup-analyzer
     └── groups.json
 ```
 
-You can now play it with `qgroup_analyzer`. As you hava got all JSON data, you can also do your own analyzing.
+You can now play it with `qgroup_analyzer`. As you hava got all JSON data, you can also do your own analysis.
 
 ### License ###
 
