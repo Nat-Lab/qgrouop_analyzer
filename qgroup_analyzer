@@ -219,8 +219,7 @@ COMMANDS:
                            <b> are group ID.
   favorite_groups <uin>  : show level point rank of groups for user <uin>, 
                            where <uin> is user ID.
-  get_joined <uin>       : show joined groups for <uin>m where <uin> is user 
-                           ID.
+  get_joined <uin>       : show joined groups for <uin> where <uin> is user ID.
   get_uin <nick/card>    : get user's ID by it's nickname or group card name, 
                            where <nick/card> is user's nick or card name.
 
