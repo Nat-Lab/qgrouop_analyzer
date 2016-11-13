@@ -13,7 +13,7 @@ POST body when you try to retrieve group list/member list. (i.e.
 http://qun.qq.com/member.html#gid=xxxxxx), where xxxxx is a group ID.
 
 One or all of the value above are not set. Please do: 
-$ export COOKIE="Cookie: .... your cookie ...." 
+$ export COOKIE=".... your cookie ...." 
 $ export bkn="... your bkn ..."
 $ $0
 HELP
@@ -37,7 +37,7 @@ HELP
 	
 
 function do_api {
-	curl -s -H "$COOKIE" "$API_base/$1?bkn=$bkn&$2"
+	curl -s -H "Cookie: $COOKIE" "$API_base/$1?bkn=$bkn&$2"
 }
 
 # get friends, groups:
