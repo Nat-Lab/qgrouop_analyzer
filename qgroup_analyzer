@@ -2,6 +2,8 @@
 
 savedir="save"
 
+[[ ! -e save || ! -e save/groups ]] && echo "no saved data. Do qgroup_info_dump first." && exit 1
+
 # _get_name_from_group: fetch user's name from group (internal)
 # param:  $1: group
 #         $2: uin
@@ -209,4 +211,23 @@ $(jq '.mems [] .uin' < $savedir/groups/$2.json)"
 
 }
 
-$*
+[[ ! -z $* ]] && $* || cat << HELP
+usage: $0 <command> <args> [args...]
+
+COMMANDS:
+  common_members <a> <b> : show common members in group <a> & <b>, where <a> &
+                           <b> are group ID.
+  favorite_groups <uin>  : show level point rank of groups for user <uin>, 
+                           where <uin> is user ID.
+  get_joined <uin>       : show joined groups for <uin>m where <uin> is user 
+                           ID.
+  get_uin <nick/card>    : get user's ID by it's nickname or group card name, 
+                           where <nick/card> is user's nick or card name.
+
+ADVANCE COMMANDS:
+  _get_group_name <gid>
+  _get_group_point <gid> <uin>
+  _get_name_from_group <gid> <uin> <card?>
+  _get_uin_from_group <gid> <uin>
+  _if_in_group <gid> <nick/card/uin> <uin?>
+HELP
