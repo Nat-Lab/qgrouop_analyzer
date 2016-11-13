@@ -60,7 +60,7 @@ function _if_in_group () {
 
 }
 
-# _get_group_name: get group's name by group ID
+# _get_group_name: get group's name by group ID (internal)
 # param:  $1: group ID
 # return: group name if exist
 function _get_group_name () {
@@ -76,6 +76,55 @@ function _get_group_name () {
 		)' < $savedir/groups.json
 	done | sed -e 's/"$//; s/^"//; s/&nbsp;/ /g;'
 	
+}
+
+# _get_group_point: get user's level point from a given group (internal)
+# param:  $1: group
+#         $2: uin
+# return: point if exist
+function _get_group_point () {
+
+	[[ -z $2 ]] && return 1
+	[[ ! -e $savedir/groups/$1.json ]] && return 2
+
+	jq 'foreach .mems [] as $item (.;
+		if $item .uin == '$2'
+			then $item .lv .point
+			else empty
+		end
+	)' < $savedir/groups/$1.json
+
+}
+
+# favorite_groups: get user's favorite groups ranking. (according to in-group level score.)
+# param:  $1: uin
+# return: list of groups.
+function favorite_groups () {
+
+	groups="
+$(jq '.join [] .gc' < save/groups.json)
+$(jq '.create [] .gc' < save/groups.json)
+$(jq '.manage [] .gc' < save/groups.json)"
+
+	temp="$(mktemp)"
+	count=0
+
+	for group in $groups
+	do
+		 $(_if_in_group $group $1 true) && echo "$(_get_group_point $group $1)	$group" >> $temp
+	done
+
+	printf "%-4s %-13s %-7s %-30s\n" "#" "Group ID" "Points" "Group Name"
+	printf "%-4s %-13s %-7s %-30s\n" "---" "------------" "------" "-----------------------------"
+
+	sort -nr $temp | while read item
+	do
+		let count++
+		gid="$(cut -f2 <<< "$item")"
+		printf "%-4s %-13s %-7s %-30s\n" "$count" "$gid" "$(cut -f1 <<< "$item")" "$(_get_group_name $gid)"
+		
+	done 
+
 }
 
 # get_uin: search for a user's uin form groups by name
@@ -119,7 +168,7 @@ $(jq '.manage [] .gc' < save/groups.json)"
 
 	count=0
 
-	for  group in $groups
+	for group in $groups
 	do
 		$(_if_in_group $group $2 $_arg) && {
 			let count++
