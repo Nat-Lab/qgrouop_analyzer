@@ -7,12 +7,9 @@ API_base='http://qun.qq.com/cgi-bin/qun_mgr'
 qgroup_download is a simple tools writen is BaSH to download QQ groups
 informations. 
 
-To use it, set COOKIE to your http://qun.qq.com/ cookie, and set bkn to your
-http://qun.qq.com/ bkn. 'bkn' is some kind of CSRF token. You can find it in
-POST body when you try to retrieve group list/member list. (i.e. 
-http://qun.qq.com/member.html#gid=xxxxxx), where xxxxx is a group ID.
+To use it, you need to set your COOKIE and bkn form qun.qq.com to env, see 
+README.md for more informations.
 
-One or all of the value above are not set. Please do: 
 $ export COOKIE=".... your cookie ...." 
 $ export bkn="... your bkn ..."
 $ $0
