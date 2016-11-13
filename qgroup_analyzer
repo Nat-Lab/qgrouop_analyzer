@@ -119,7 +119,7 @@ $(jq '.manage [] .gc' < save/groups.json)"
 	printf "%-4s %-13s %-7s %-30s\n" "#" "Group ID" "Points" "Group Name"
 	printf "%-4s %-13s %-7s %-30s\n" "---" "------------" "------" "-----------------------------"
 
-	sort -nr $temp | while read item
+	sort -nr $temp | while read -r item
 	do
 		let count++
 		gid="$(cut -f2 <<< "$item")"
@@ -201,7 +201,7 @@ $(jq '.mems [] .uin' < $savedir/groups/$2.json)"
 	count=0
 
 	# sort them, and get the duplicated members, then print them.
-	sort <<< "$members" | uniq -d | while read uin
+	sort <<< "$members" | uniq -d | while read -r uin
 	do
 		let count++
 		printf "%-4s %-13s %-30s\n" "$count" "$uin" "$(_get_name_from_group $1 $uin true)"

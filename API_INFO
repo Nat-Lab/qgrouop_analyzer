@@ -1,0 +1,11 @@
+API can be call using: GET/POST http://qun.qq.com/cgi-bin/qun_mgr/<Method>
+
+Avaliable API Methods: 
+
+  get_group_list: need bkn (CSRF Token).
+  get_friend_list: need bkn (CSRF Token).
+  search_group_members: need bkn (CSRF Token), gc (Group ID), st (Start), end (End), sort (Sort).
+  add_group_members: need bkn (CSRF Token), gc (Group ID), ul (User ID).
+  set_group_admin: need bkn (CSRF Token), gc (Group ID), ul (User ID), op (1: Set as admin, 0: remove).
+  delete_group_member: need bkn (CSRF Token),  gc (Group ID), ul (User ID), flag (?).
+

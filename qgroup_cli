@@ -1,0 +1,25 @@
+#!/bin/bash
+
+API_base='http://qun.qq.com/cgi-bin/qun_mgr'
+
+[[ -z $COOKIE || -z $bkn ]] && {
+	cat << HELP
+qgroup_cli is a simple tools writen is BaSH to manage QQ groups.
+
+To use it, you need to set your COOKIE and bkn form qun.qq.com to env, see 
+README.md for more informations.
+
+$ export COOKIE=".... your cookie ...." 
+$ export bkn="... your bkn ..."
+$ $0 <command> <arg> [arg...]
+HELP
+
+}
+
+function do_api () {
+	curl -s -H "Cookie: $COOKIE" "$API_base/$1?bkn=$bkn&$2"
+}
+
+function add_member () {
+	[[ -z $2 ]] && echo "usage: add_member <gid> <uid>"
+}
