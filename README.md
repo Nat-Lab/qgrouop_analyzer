@@ -5,7 +5,7 @@
 
 ### 如何使用？ ###
 
-在使用 `qgroup-analyzer` 前，妳需要先將 QQ 群組與好友數據匯出。使用 `qgroup_info_dump` 就能做到。`qgroup_info_dump` 會從環境變量中讀取 `COOKIE` 和 `bkn`。這些信息是登錄到 QQ API 所需要的憑據。若要獲取這些信息，登陸到[QQ 群](http://qun.qq.com)網站，訪問[成員管理](http://qun.qq.com/member.html)頁。在地址欄輸入 `javascript:alert(document.cookie)` 來獲取 `COOKIE`。在地址欄輸入 `javascript:(for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o > n; ++n) t += (t << 5) + e.charAt(n).charCodeAt();alert(2147483647 & t);)` 來獲取 `bkn`。
+在使用 `qgroup-analyzer` 前，妳需要先將 QQ 群組與好友數據匯出。使用 `qgroup_info_dump` 就能做到。`qgroup_info_dump` 會從環境變量中讀取 `COOKIE` 和 `bkn`。這些信息是登錄到 QQ API 所需要的憑據。若要獲取這些信息，登陸到[QQ 群](http://qun.qq.com)網站，訪問[成員管理](http://qun.qq.com/member.html)頁。在地址欄輸入 `javascript:alert(document.cookie)` 來獲取 `COOKIE`。在地址欄輸入 `javascript:for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o > n; ++n) t += (t << 5) + e.charAt(n).charCodeAt();alert(2147483647 & t);` 來獲取 `bkn`。
 
 取得這些信息之後，就可以開始匯出數據了：
 
