@@ -537,9 +537,12 @@ function wolfram_graph () {
 
 	[[ -z $1 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1
 	[[ -e $1 ]] && echo "$1 already exist." && return 3
+	[[ ! -z $2 && ! -e $savedir/groups/$2.json ]] && echo "group does not exist." && return 2 
 	[[ ! -z $2 && -z $3 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1 
+	[[ ! -z $2 ]] && m="$(jq '.mems [] .uin' < $savedir/groups/$2.json)"
 
 	temp_dir="$(mktemp -d)"
+	node_tmp="$(mktemp)"
 
 	{
 		echo -n "GraphPlot[{"
@@ -548,33 +551,34 @@ function wolfram_graph () {
 		do
 			gname="$(_get_group_name $group)"
 			infos="$(jq '.mems [] .nick, .mems [] .uin' < $savedir/groups/$group.json)"
-			echo -n "started $group ($gname)... " >&2
+			echo -n "graphing $group ($gname)... " >&2
 			_c_infos="$(($(wc -l <<< "$infos")/2))"
-			count=0
+			count=$_c_infos
 			head -n$_c_infos <<< "$infos" | sed -e 's/"$//; s/^"//; s/&nbsp;/_/g; s/ /_/g;' | while read -r uname
 			do
 				let count++
-				uin="$(tail -n$_c_infos <<< "$infos" | sed "${count}q;d")"
+				uin="$(sed "${count}q;d" <<< "$infos")"
 				[[ $IGNORES == *"$uin"* ]] && echo -n "ignored $uin... " >&2 && continue 
 				[[ ! -z $2 ]] && {
 					[[ $uin == $3 ]] && continue
-					$(_if_in_group "$2" "$uin" true) || continue
+					[[ $m == *"$uin"* ]] || continue
 				}
 				echo "\"$uname\" -> \"$gname\", " >> $temp_dir/$uin
+				echo "$uin" >> $node_tmp
 			done
 			echo "done" >&2
 		done 
 
 		echo -n "generating... " >&2
 
-		for f in $temp_dir/*
+		for f in $(sort $node_tmp | uniq -d)
 		do
-			[[ $(wc -l < $f) -gt 1 ]] && cat $f
+			cat $temp_dir/$f
 		done | tr -d '\n' | sed -e 's/, $//;'
 
 		echo -n "}, VertexLabeling -> True]"
 
-		rm -r $temp_dir
+		rm -r $temp_dir $node_tmp
 
 		echo "done" >&2
 
