@@ -530,16 +530,19 @@ function prolog_export () {
 
 # wolfram_graph: generate a wolfram graph for showing relationship.
 # param:  $1: output file
-#         optional: $2: limit source gid to $2
+#         optional: $2: limit source gid(s) to $2
 #         require if $2 present: $3: own uid
 # return: GraphPlot[...]
 function wolfram_graph () {
 
 	[[ -z $1 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1
 	[[ -e $1 ]] && echo "$1 already exist." && return 3
-	[[ ! -z $2 && ! -e $savedir/groups/$2.json ]] && echo "group does not exist." && return 2 
-	[[ ! -z $2 && -z $3 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1 
-	[[ ! -z $2 ]] && m="$(jq '.mems [] .uin' < $savedir/groups/$2.json)"
+	[[ ! -z $2 && -z $3 ]] && echo "usage: wolfram_graph <output> [src_gid,src_gid2,... <own_uin>]" && return 1 
+	for gload in $(tr ',' ' ' <<< "$2")
+	do
+		[[ ! -e  $savedir/groups/$gload.json ]] && echo "group(s) does not exist." && return 2
+		m="$m $(jq '.mems [] .uin' < $savedir/groups/$gload.json)"
+	done
 
 	temp_dir="$(mktemp -d)"
 	node_tmp="$(mktemp)"
@@ -560,7 +563,7 @@ function wolfram_graph () {
 				let count++
 				[[ $IGNORES == *"$uin"* ]] && echo -n "ignored $uin... " >&2 && continue 
 				[[ ! -z $2 ]] && {
-					[[ $uin == $3 ]] && continue
+					[[ $uin == *"$3"* ]] && continue
 					[[ $m == *"$uin"* ]] || continue
 				}
 				echo "\"$uname\" -> \"$gname\", " >> $temp_dir/$uin
@@ -607,8 +610,11 @@ COMMANDS:
                            than <n> common groups with you.
   prolog_export <o> <u>  : export friends, groups to prolog, where <o> is
                            output file, <u> is your user ID.
-  wolfram_graph <o> [s]  : generate a wolfram GraphPlot. Where <o> is output
-                           file, [s] is optional arg to limit source gid.
+  wolfram_graph <o> [s < : generate a wolfram GraphPlot. Where <o> is output
+                           file, [s <ou>] is optional arg to limit source gid.
+                           You can specify mutiple groups. Divide them by ','.
+                           If you specified any source, you will need to fill
+                           <ou> too. Which is your own uin.
                            You can also pass an environment variable IGNORES, 
                            to specify uin(s) to ignore. Separate uins with 
                            whitespace.
