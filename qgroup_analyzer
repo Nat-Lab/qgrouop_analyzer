@@ -564,12 +564,19 @@ function wolfram_graph () {
 			echo "done" >&2
 		done 
 
+		echo -n "generating... " >&2
+
 		for f in $temp_dir/*
 		do
 			[[ $(wc -l < $f) -gt 1 ]] && cat $f
-		done
+		done | tr -d '\n' | sed -e 's/, $//;'
 
 		echo -n "}, VertexLabeling -> True]"
+
+		rm -r $temp_dir
+
+		echo "done" >&2
+
 	} | tr -d '\n' > "$1"
 }
 
