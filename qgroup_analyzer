@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 savedir="save"
 
@@ -556,8 +556,8 @@ function wolfram_graph () {
 			count=$_c_infos
 			head -n$_c_infos <<< "$infos" | sed -e 's/"$//; s/^"//; s/&nbsp;/_/g; s/ /_/g;' | while read -r uname
 			do
+				mapfile -s$count -n1 uin <<< "$infos"
 				let count++
-				uin="$(sed "${count}q;d" <<< "$infos")"
 				[[ $IGNORES == *"$uin"* ]] && echo -n "ignored $uin... " >&2 && continue 
 				[[ ! -z $2 ]] && {
 					[[ $uin == $3 ]] && continue
