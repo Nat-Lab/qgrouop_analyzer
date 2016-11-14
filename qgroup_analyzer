@@ -539,6 +539,8 @@ function wolfram_graph () {
 	[[ -e $1 ]] && echo "$1 already exist." && return 3
 	[[ ! -z $2 && -z $3 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1 
 
+	temp_dir="$(mktemp -d)"
+
 	{
 		echo -n "GraphPlot[{"
 
@@ -552,17 +554,23 @@ function wolfram_graph () {
 			head -n$_c_infos <<< "$infos" | sed -e 's/"$//; s/^"//; s/&nbsp;/_/g; s/ /_/g;' | while read -r uname
 			do
 				let count++
+				uin="$(tail -n$_c_infos <<< "$infos" | sed "${count}q;d")"
 				[[ ! -z $2 ]] && {
-					uin="$(tail -n$_c_infos <<< "$infos" | sed "${count}q;d" )"
 					[[ $uin == $3 ]] && continue
 					$(_if_in_group "$2" "$uin" true) || continue
 				}
-				echo -n "\"$uname\" -> \"$gname\", " 
+				echo "\"$uname\" -> \"$gname\", " >> $temp_dir/$uin
 			done
 			echo "done" >&2
-		done | sed -e 's/, $//;'	
-		echo -n "}, VertexLabeling -> Tooltip]"
-	} > "$1"
+		done 
+
+		for f in $temp_dir/*
+		do
+			[[ $(wc -l < $f) -gt 1 ]] && cat $f
+		done
+
+		echo -n "}, VertexLabeling -> True]"
+	} | tr -d '\n' > "$1"
 }
 
 [[ ! -z $* ]] && $* || cat << HELP
