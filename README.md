@@ -81,6 +81,10 @@ Z = ... ;
 
 `wolfram_graph <output_file> [source_gid <own_uin>]` 生成 wolfram 可以繪製的圖形。`output_file` 代表要寫入的文件名，`source_gid` 是可選參數，用於指定來源組。如果指定了 `source_gid`，則必須指定 `own_uin`（自己的 `uin`）。
 
+在不限定來源 `gid` 時繪製的圖形：
+
+![Sample Graph](https://raw.githubusercontent.com/Nat-Lab/qgrouop_analyzer/doc/sample_map.png)
+
 ### License ###
 
 MIT License
