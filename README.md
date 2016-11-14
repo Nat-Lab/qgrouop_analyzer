@@ -85,6 +85,8 @@ Z = ... ;
 
 ![Sample Graph](https://raw.githubusercontent.com/Nat-Lab/qgrouop_analyzer/doc/sample_map.png)
 
+如果妳已經安裝了 Mathematica，`qgrouop_analyzer` 內置了一個幫手可以讓妳直接講使用 `wolfram_graph` 生成的語句生成圖片。使用方法是：`wolfram_export <in_file> <out_image> <out_width>`。`in_file` 代表妳使用 `wolfram_graph` 生成的文件，`out_image` 代表輸出。Mathematica 會根據提供的後綴名來決定格式。常見的有 `.svg`，`.eps`，`.pdf`，`.png`。`out_width` 代表了輸出圖片的寬度。在範例中的圖片，寬度是 4000。
+
 ### License ###
 
 MIT License
