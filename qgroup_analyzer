@@ -146,12 +146,18 @@ function _if_in_group () {
 	[[ -z $3 ]] && return 1
 	[[ ! -e $savedir/groups/$1.json ]] && return 2
 
-	(grep -q 'true' <<< "$(jq 'foreach .mems [] as $item (.;
-		if '$3'
-			then $item .uin | tostring == "'$2'"
-			else $item .card == "'$2'" or $item .nick == "'$2'"
-		end
-	)' < $savedir/groups/$1.json)") && echo "true" || echo "false"
+	#(grep -q 'true' <<< "$(jq 'foreach .mems [] as $item (.;
+	#	if '$3'
+	#		then $item .uin | tostring == "'$2'"
+	#		else $item .card == "'$2'" or $item .nick == "'$2'"
+	#	end
+	#)' < $savedir/groups/$1.json)") && echo "true" || echo "false"
+
+	# bad way, but much faster.
+	case $3 in
+		"true") (grep -q '"uin":'$2'}') && echo "true" || echo "false";;
+		*) (grep -qE '"nick":"'$2'"|"card":"'$2'"') && echo "true" || echo "false";;
+	esac < $savedir/groups/$1.json
 
 }
 
@@ -522,6 +528,43 @@ function prolog_export () {
 
 }
 
+# wolfram_graph: generate a wolfram graph for showing relationship.
+# param:  $1: output file
+#         optional: $2: limit source gid to $2
+#         require if $2 present: $3: own uid
+# return: GraphPlot[...]
+function wolfram_graph () {
+
+	[[ -z $1 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1
+	[[ -e $1 ]] && echo "$1 already exist." && return 3
+	[[ ! -z $2 && -z $3 ]] && echo "usage: wolfram_graph <output> [src_gid <own_uin>]" && return 1 
+
+	{
+		echo -n "GraphPlot[{"
+
+		for group in $(jq '.join [] .gc' < save/groups.json) $(jq '.create [] .gc' < save/groups.json) $(jq '.manage [] .gc' < save/groups.json)
+		do
+			gname="$(_get_group_name $group)"
+			infos="$(jq '.mems [] .nick, .mems [] .uin' < $savedir/groups/$group.json)"
+			echo -n "started $group ($gname)... " >&2
+			_c_infos="$(($(wc -l <<< "$infos")/2))"
+			count=0
+			head -n$_c_infos <<< "$infos" | sed -e 's/"$//; s/^"//; s/&nbsp;/_/g; s/ /_/g;' | while read -r uname
+			do
+				let count++
+				[[ ! -z $2 ]] && {
+					uin="$(tail -n$_c_infos <<< "$infos" | sed "${count}q;d" )"
+					[[ $uin == $3 ]] && continue
+					$(_if_in_group "$2" "$uin" true) || continue
+				}
+				echo -n "\"$uname\" -> \"$gname\", " 
+			done
+			echo "done" >&2
+		done | sed -e 's/, $//;'	
+		echo -n "}, VertexLabeling -> Tooltip]"
+	} > "$1"
+}
+
 [[ ! -z $* ]] && $* || cat << HELP
 usage: $0 <command> <args> [args...]
 
@@ -544,6 +587,8 @@ COMMANDS:
                            than <n> common groups with you.
   prolog_export <o> <u>  : export friends, groups to prolog, where <o> is
                            output file, <u> is your user ID.
+  wolfram_graph <o> [s]  : generate a wolfram GraphPlot. Where <o> is output
+                           file, [s] is optional arg to limit source gid.
 
 ADVANCE COMMANDS:
   _count_friends_in_group <gid>
