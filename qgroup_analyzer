@@ -555,6 +555,7 @@ function wolfram_graph () {
 			do
 				let count++
 				uin="$(tail -n$_c_infos <<< "$infos" | sed "${count}q;d")"
+				[[ $IGNORES == *"$uin"* ]] && echo -n "ignored $uin... " >&2 && continue 
 				[[ ! -z $2 ]] && {
 					[[ $uin == $3 ]] && continue
 					$(_if_in_group "$2" "$uin" true) || continue
@@ -604,6 +605,9 @@ COMMANDS:
                            output file, <u> is your user ID.
   wolfram_graph <o> [s]  : generate a wolfram GraphPlot. Where <o> is output
                            file, [s] is optional arg to limit source gid.
+                           You can also pass an environment variable IGNORES, 
+                           to specify uin(s) to ignore. Separate uins with 
+                           whitespace.
 
 ADVANCE COMMANDS:
   _count_friends_in_group <gid>
