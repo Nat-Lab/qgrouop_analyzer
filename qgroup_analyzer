@@ -361,7 +361,7 @@ function get_joined () {
 	[[ -z $2 ]] && echo "usage: get_joined <type> <target>, where type can be uin or nickname."
 	case $1 in
 		"uin") _arg=true;;
-		"nickname") _arg=false;;
+		"nick") _arg=false;;
 		*) echo "unknow type $1"; return 1;;
 	esac
 
@@ -623,7 +623,9 @@ COMMANDS:
   friends_common         : rank friends with # of common groups.
   friends_in_group <gid> : list friends in <gid>, where <gid> is group ID.
   get_all_names <uin>    : get all names use by <uin>, where <uin> is user ID.
-  get_joined <uin>       : show joined groups for <uin> where <uin> is user ID.
+  get_joined <type> <u>  : show joined groups for <u> where <u> is user ID or
+                           nickname/cardname. Use 'uin' if <u> is uin, 'nick'
+                           otherwise.
   get_uin <nick/card>    : get user's ID by it's nickname or group card name, 
                            where <nick/card> is user's nick or card name.
   joined_of_group <gid>  : list joined groups for all groups members in a given

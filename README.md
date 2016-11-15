@@ -55,7 +55,7 @@ qgroup-analyzer
 
 `get_all_names <uin>` 列出 `uin` 全部名字。（全部群內的群名片。）
 
-`get_joined <uin>` 列出 `uin` 所加入的群組。
+`get_joined <type> <user>` 列出 `user` 所加入的群組。用 `type` 指定查詢類型。`uin` 代表 `user` 的格式是 `uid`，`nick` 代表 `user` 的格式是用戶名或群名片。
 
 `get_uin <nick/card>` 列出使用指定的群名片，或用戶名的用戶的 `uin`。
 
