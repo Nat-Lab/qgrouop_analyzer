@@ -607,6 +607,11 @@ wolfram_export () {
 
 }
 
+# trace_route: wrapper for trace_route.py
+function trace_route () {
+	./trace_route.py $*
+}
+
 [[ ! -z $* ]] && $* || cat << HELP
 usage: $0 <command> <args> [args...]
 
@@ -629,6 +634,11 @@ COMMANDS:
                            than <n> common groups with you.
   prolog_export <o> <u>  : export friends, groups to prolog, where <o> is
                            output file, <u> is your user ID.
+  trace_route <f> <t> <u>: try to find a route between a user/group to another.
+                           where <f> and <t> represent a group or user. To 
+                           represent a group, use "gid,g". (e.g. 123456,g). To
+                           represent a user, use "uid,u". (e.g 123456,u). <u>
+                           stands for your uin. (wrapper for trace_route.py)
   wolfram_graph <o> [s < : generate a wolfram GraphPlot. Where <o> is output
                            file, [s <ou>] is optional arg to limit source gid.
                            You can specify mutiple groups. Divide them by ','.

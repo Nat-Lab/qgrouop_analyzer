@@ -79,6 +79,9 @@ Y = ...,
 Z = ... ;
 ```
 
+`trace_route <from> <to> <own_uin>` 嘗試在兩個組／群員之間找到路徑。`from` 與 `to` 代表一個組，或用戶。使用 `uid,u` 來代表用戶。例如：`123456,u`。使用 `uid,g` 來代表組。例如：`543210,g`。`own_uin` 代表妳自己的 `uin`。
+
+
 `wolfram_graph <output_file> [source_gid[,source_gid,...] <own_uin>]` 生成 wolfram 可以繪製的圖形。`output_file` 代表要寫入的文件名，`source_gid` 是可選參數，用於指定來源組。妳可以指定多個 `source_gid`，使用逗号分隔。如果指定了 `source_gid`，則必須指定 `own_uin`（自己的 `uin`）。無論是哪種情況，妳都可以傳入一個環境變量，`IGNORES`，來指定要忽略的 `uin`。使用空格來分隔多個 `uin`。
 
 在不限定來源 `gid` 時繪製的圖形：
