@@ -14,6 +14,7 @@ you need to specify your own id, otherwsie you will always be the route.
 
 route_map = {}
 unames = {}
+nodes = 0
 
 for group in os.listdir('save/groups'):
 	gid = str(group.split('.')[0]) + ",g"
@@ -25,6 +26,7 @@ for group in os.listdir('save/groups'):
 		if mem['uin'] != int(sys.argv[3]):
 			route_map[gid].append(uin)
 			route_map[uin].append(gid)
+			nodes += 2
 
 def bfs(graph, start, end):
 	visited = []
@@ -49,7 +51,7 @@ def getName(obj):
 		if group['gc'] == int(objval): return html.unescape(group['gn']) + "(" + obj + ")"
 	return obj;
 
-print(str(len(os.listdir('save/groups'))) + " group(s), " + str(len(unames)) + " user(s), " + str(len(route_map)) + " route(s)." )
+print(str(len(os.listdir('save/groups'))) + " group(s), " + str(len(unames)) + " user(s), " + str(len(route_map)) + " route(s), " + str(nodes) + " node(s)." )
 
 route = bfs(route_map, sys.argv[1], sys.argv[2])
 for obj in route[:-1]: print(getName(obj) + " -> ", end="")
