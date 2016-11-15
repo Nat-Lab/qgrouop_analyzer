@@ -16,6 +16,9 @@ route_map = {}
 unames = {}
 nodes = 0
 
+ignores = []
+if(os.environ.get('IGNORES')): ignores = (os.environ.get('IGNORES') + ' ').split(' ')
+
 for group in os.listdir('save/groups'):
 	gid = str(group.split('.')[0]) + ",g"
 	route_map[gid] = []
@@ -23,7 +26,7 @@ for group in os.listdir('save/groups'):
 		uin = str(mem['uin']) + ",u"
 		unames[mem['uin']] = mem['nick']
 		if not route_map.get(uin): route_map[uin] = []
-		if mem['uin'] != int(sys.argv[3]):
+		if mem['uin'] != int(sys.argv[3]) and gid not in ignores and uin not in ignores:
 			route_map[gid].append(uin)
 			route_map[uin].append(gid)
 			nodes += 2
@@ -57,5 +60,5 @@ print(str(len(os.listdir('save/groups'))) + " group(s), " +
       str(nodes) + " route(s)." )
 
 route = bfs(route_map, sys.argv[1], sys.argv[2])
-for obj in route[:-1]: print(getName(obj) + " -> ", end="")
+for obj in route[:-1]: print(getName(obj), end=' -> ')
 print(getName(route[-1]))

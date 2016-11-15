@@ -637,8 +637,11 @@ COMMANDS:
   trace_route <f> <t> <u>: try to find a route between a user/group to another.
                            where <f> and <t> represent a group or user. To 
                            represent a group, use "gid,g". (e.g. 123456,g). To
-                           represent a user, use "uid,u". (e.g 123456,u). <u>
-                           stands for your uin. (wrapper for trace_route.py)
+                           represent a user, use "uid,u". (e.g 123456,u).You 
+                           can also set environment variable in that format to 
+                           ignore users or groups. Separate with whitespaces.
+                           And <u> is you own uin. (this is a wrapper for 
+                           trace_route.py)
   wolfram_graph <o> [s < : generate a wolfram GraphPlot. Where <o> is output
                            file, [s <ou>] is optional arg to limit source gid.
                            You can specify mutiple groups. Divide them by ','.
