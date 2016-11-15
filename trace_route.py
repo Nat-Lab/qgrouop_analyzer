@@ -51,7 +51,10 @@ def getName(obj):
 		if group['gc'] == int(objval): return html.unescape(group['gn']) + "(" + obj + ")"
 	return obj;
 
-print(str(len(os.listdir('save/groups'))) + " group(s), " + str(len(unames)) + " user(s), " + str(len(route_map)) + " route(s), " + str(nodes) + " node(s)." )
+print(str(len(os.listdir('save/groups'))) + " group(s), " + 
+      str(len(unames)) + " user(s), " + 
+      str(len(route_map)) + " node(s), " + 
+      str(nodes) + " route(s)." )
 
 route = bfs(route_map, sys.argv[1], sys.argv[2])
 for obj in route[:-1]: print(getName(obj) + " -> ", end="")
