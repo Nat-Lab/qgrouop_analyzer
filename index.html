@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Qgrouop analyzer by Nat-Lab</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Qgrouop analyzer</h1>
+        <p>A QQ Group Members Relationship Analyzer. </p>
+
+        <p class="view"><a href="https://github.com/Nat-Lab/qgrouop_analyzer">View the Project on GitHub <small>Nat-Lab/qgrouop_analyzer</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/Nat-Lab/qgrouop_analyzer/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/Nat-Lab/qgrouop_analyzer/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/Nat-Lab/qgrouop_analyzer">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>
+<a id="qgroup-analyzer" class="anchor" href="#qgroup-analyzer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>qgroup-analyzer</h3>
+
+<hr>
+
+<p><code>qgroup-analyzer</code> 是使用 BaSH 寫成的一個 QQ 群組分析工具。它需要 <a href="https://stedolan.github.io/jq/">jq</a> 來運行。</p>
+
+<h3>
+<a id="如何使用" class="anchor" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>如何使用？</h3>
+
+<p>在使用 <code>qgroup-analyzer</code> 前，妳需要先將 QQ 群組與好友數據匯出。使用 <code>qgroup_info_dump</code> 就能做到。<code>qgroup_info_dump</code> 會從環境變量中讀取 <code>COOKIE</code> 和 <code>bkn</code>。這些信息是登錄到 QQ API 所需要的憑據。若要獲取這些信息，登陸到<a href="http://qun.qq.com">QQ 群</a>網站，訪問<a href="http://qun.qq.com/member.html">成員管理</a>頁。在地址欄輸入 <code>javascript:alert(document.cookie)</code> 來獲取 <code>COOKIE</code>。在地址欄輸入 <code>javascript:for (var e = $.cookie("skey"), t = 5381, n = 0, o = e.length; o &gt; n; ++n) t += (t &lt;&lt; 5) + e.charAt(n).charCodeAt();alert(2147483647 &amp; t);</code> 來獲取 <code>bkn</code>。</p>
+
+<p>取得這些信息之後，就可以開始匯出數據了：</p>
+
+<pre><code>$ export COOKIE="...妳的 COOKIE..." 
+$ export bkn="...妳的 bkn..."
+$ ./qgroup_info_dump
+</code></pre>
+
+<p>如果一切順利，你會獲得這些 <code>JSON</code> 文件。</p>
+
+<pre><code>qgroup-analyzer
+├── qgroup_analyzer
+├── qgroup_info_dump
+└── save
+    ├── friends.json
+    ├── groups
+    │   ├── xxxx.json
+    │   ├── xxxx.json
+    │   ├── xxxx.json
+    │   └── ....
+    └── groups.json
+</code></pre>
+
+<p><code>friends.json</code> 是妳好友的列表。</p>
+
+<p><code>groups.json</code> 是妳群組的列表。</p>
+
+<p><code>groups/%%%%.json</code> 是單個群組的詳細信息。包括成員、管理員、等級等數據。</p>
+
+<p>現在，你可以使用 <code>qgroup_analyzer</code> 來分析妳的群組了，語法是：</p>
+
+<pre><code>./qgroup_analyzer &lt;指令&gt; [參數] [參數...]
+</code></pre>
+
+<p>可以使用的指令有（其中，<code>uin</code> 代表 QQ ID，<code>gid</code> 代表群組 ID。）：</p>
+
+<p><code>common_members &lt;gid_a&gt; &lt;gid_b&gt;</code> 列出在群組 <code>a</code> 和群組 <code>b</code> 內的共同成員。</p>
+
+<p><code>favorite_groups &lt;uin&gt;</code> 對用戶 <code>uin</code> 的群組等級積分進行排行。</p>
+
+<p><code>friends_common</code> 對好友依據他們與妳共同群組的數量進行排行。</p>
+
+<p><code>friends_in_group &lt;gid&gt;</code> 列出群組 <code>gid</code> 中的好友。<code>gid</code> 代表群組 ID。</p>
+
+<p><code>get_all_names &lt;uin&gt;</code> 列出 <code>uin</code> 全部名字。（全部群內的群名片。）</p>
+
+<p><code>get_joined &lt;type&gt; &lt;user&gt;</code> 列出 <code>user</code> 所加入的群組。用 <code>type</code> 指定查詢類型。<code>uin</code> 代表 <code>user</code> 的格式是 <code>uid</code>，<code>nick</code> 代表 <code>user</code> 的格式是用戶名或群名片。</p>
+
+<p><code>get_uin &lt;nick/card&gt;</code> 列出使用指定的群名片，或用戶名的用戶的 <code>uin</code>。</p>
+
+<p><code>joined_of_group &lt;gid&gt;</code> 列出 <code>gid</code> 的成員所加入的群。</p>
+
+<p><code>joined_of_firends</code> 列出所有好友加入的群。</p>
+
+<p><code>popular_groups</code> 依據群內好友數量，對群進行排行。</p>
+
+<p><code>potential_friends &lt;n&gt;</code> 列出共同群超過 <code>n</code> 個，但不是好友的使用者。</p>
+
+<p><code>prolog_export &lt;output_filename&gt; &lt;own_uin&gt;</code> 匯出數據到 <code>prolog</code> 文件。<code>output_filename</code> 代表要寫入的文件名，<code>own_uin</code> 代表自己的 <code>uin</code>。<code>prolog_export</code> 指令會匯出所有好友關係、群關係。它會使用如下的條件：<code>member(uin, gid).</code>，<code>friend(own_uin, uin).</code>。例如，要列出所有群之間的成員關係網，可以使用如下的指令：</p>
+
+<pre><code>? - member(X,Y),member(X,Z),not(Z==Y),not(X==own_uin).
+X = a_uin_of_group_member, 
+Y = a_gid_that_uin_joined, 
+Z = another_gid_that_uin_joined ;
+X = ..., 
+Y = ..., 
+Z = ... ;
+</code></pre>
+
+<p><code>trace_route &lt;from&gt; &lt;to&gt; &lt;own_uin&gt;</code> 嘗試在兩個組／群員之間找到路徑。<code>from</code> 與 <code>to</code> 代表一個組，或用戶。使用 <code>uid,u</code> 來代表用戶。例如：<code>123456,u</code>。使用 <code>gid,g</code> 來代表組。例如：<code>543210,g</code>。妳還可以用這個格式，通過環境變量 <code>IGNORES</code> 來指定要忽略的群組與用戶，使用空格來分隔項目。<code>own_uin</code> 代表妳自己的 <code>uin</code>。</p>
+
+<p><code>wolfram_graph &lt;output_file&gt; [source_gid[,source_gid,...] &lt;own_uin&gt;]</code> 生成 wolfram 可以繪製的圖形。<code>output_file</code> 代表要寫入的文件名，<code>source_gid</code> 是可選參數，用於指定來源組。妳可以指定多個 <code>source_gid</code>，使用逗号分隔。如果指定了 <code>source_gid</code>，則必須指定 <code>own_uin</code>（自己的 <code>uin</code>）。無論是哪種情況，妳都可以傳入一個環境變量，<code>IGNORES</code>，來指定要忽略的 <code>uin</code>。使用空格來分隔多個 <code>uin</code>。</p>
+
+<p>在不限定來源 <code>gid</code> 時繪製的圖形：</p>
+
+<p><img src="https://raw.githubusercontent.com/Nat-Lab/qgrouop_analyzer/doc/sample_map.png" alt="Sample Graph"></p>
+
+<p>如果妳已經安裝了 Mathematica，<code>qgrouop_analyzer</code> 內置了一個幫手可以讓妳直接講使用 <code>wolfram_graph</code> 生成的語句生成圖片。使用方法是：<code>wolfram_export &lt;in_file&gt; &lt;out_image&gt; &lt;out_width&gt;</code>。<code>in_file</code> 代表妳使用 <code>wolfram_graph</code> 生成的文件，<code>out_image</code> 代表輸出。Mathematica 會根據提供的後綴名來決定格式。常見的有 <code>.svg</code>，<code>.eps</code>，<code>.pdf</code>，<code>.png</code>。<code>out_width</code> 代表了輸出圖片的寬度。在範例中的圖片，寬度是 4000。</p>
+
+<h3>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h3>
+
+<p>MIT License</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/Nat-Lab">Nat-Lab</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
