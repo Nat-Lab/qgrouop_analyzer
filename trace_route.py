@@ -42,12 +42,15 @@ def bfs(graph, start, end):
 def getName(obj):
 	objtype = obj.split(',')[1]
 	objval = obj.split(',')[0]
-	if objtype == 'u': return unames[int(objval)];
+	if objtype == 'u': return unames[int(objval)] + "(" + obj + ")";
 	groups_obj = json.loads(open('save/groups.json').read())
 	groups_lst = groups_obj['create'] + groups_obj['join'] + groups_obj['manage']
 	for group in groups_lst:
-		if group['gc'] == int(objval): return html.unescape(group['gn'])
+		if group['gc'] == int(objval): return html.unescape(group['gn']) + "(" + obj + ")"
 	return obj;
+
+print(str(len(os.listdir('save/groups'))) + " group(s), " + str(len(unames)) + " user(s), " + str(len(route_map)) + " route(s)." )
+
 route = bfs(route_map, sys.argv[1], sys.argv[2])
 for obj in route[:-1]: print(getName(obj) + " -> ", end="")
 print(getName(route[-1]))
